@@ -1,0 +1,47 @@
+import visa;
+
+rm = visa.ResourceManager('@sim');
+rm.list_resources();
+test_inst = rm.open_resource('ASRL1::INSTR', read_termination='\n');
+print(test_inst.query("?IDN"));#gives general id and current display info
+
+print(test_inst.query("test"))
+test_inst.write("testcode");#error resulting from test instrument - putting "CURV?" in and assigning it to a var gives data
+print(test_inst.read())
+
+#for gpib devices, use "GPIB0::__::INSTR" - __ is for the instrument number
+#For the kepco
+#vals = test_inst.query_ascii_values('CURV?')#values in Ascii, easier to read and understand than Binary - for binary values, change ascii to lbinary
+#print(vals)
+    #for editing defaults, use inst.values_format. (is_binary, converter,separator,or container)
+
+
+#actual example for Keithley
+kmulti = rm.open_resource("GPIB::1");
+kmulti = write("*rst;status:preset;*cls") #sends reset and initialization message to instrument
+#setting interval measurement time in s and number of measurements
+intMesT = 500;
+numMes = 15;
+kmulti.write("status:measurement:enable 512; *sre 1");
+kmulti.write("sample:count %d" % numMes)
+kmulti.write("trigger:source bus")
+kmulti.write("trigger:delay %f" % (intMesT / 1000.0))#converts seconds to ms
+kmulti.write("trace:points %d" % numMes)
+kmulti.write("trace:feed sensel; feed:control next") #ready to take measurements at this point
+
+kmulti.write("initiate")
+kmulti.assert_trigger()
+kmulti.wait_for_srq()
+
+potentials = kmulti.query_ascii_values("trace:data?")#getting avg. voltage requires summing then dividing by len
+#to prepare for next round of measurement
+kmulti.query("status:measurement?")
+kmulti.write("trace:clear; feed:control next")
+
+
+#setting a time limit for instrument events allows them to not go over certain times --> device.timeout = x, in ms
+#setting termination characters: device.read_termination="\r"
+#use visalib with rm to access low and mid level functions  -  Rest of Document is library of commands
+#Look at folder for relevant visa manuals  - For HP 8116A device, look at p 73 
+#important commands
+#   read_values - returns list of floating points from device
