@@ -1,5 +1,5 @@
 # MOKESetup
-Python instructions for MOKE setup for use in labs
+Python instructions for MOKE (Magneto-optical Kerr Effect) setup for use in labs
 
 Instructions in Python to control a USB-3104 Voltage/Current output device to control a Kepco power supply. There are varying levels of complexity, with a simple text interface to a GUI. Not much range, obviously. 
 
